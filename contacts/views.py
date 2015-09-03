@@ -4,16 +4,40 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
+from django.views.generic import ListView
+
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+
 import pprint
 from . import forms
 from . import models
 
-def list_contacts(request):
-    if request.user.is_authenticated():
-        list_contacts = get_list_or_404(models.Contact, user=request.user)
-        return render(request, 'contacts/list_contacts.html', {'list_contacts' : list_contacts})
-    else:
-        return redirect(reverse('login_user'))
+# @login_required
+# def list_contacts(request):
+#     if request.user.is_authenticated():
+#         list_contacts = get_list_or_404(models.Contact, user=request.user)
+#         return render(request, 'contacts/list_contacts.html', {'list_contacts' : list_contacts})
+#     else:
+#         return redirect(reverse('login_user'))
+
+# class ListContacts(View):
+#     def get(self, request):
+#         if request.user.is_authenticated():
+#             list_contacts = get_list_or_404(models.Contact, )
+#             return render(request, 'contacts/list_contacts.html', {'list_contacts' : list_contacts})
+#         else:
+#             return redirect(reverse('login_user'))
+
+class ListContacts(ListView):
+    template_name = 'contacts/list_contacts.html'
+    context_object_name = 'list_contacts'
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        self.queryset = models.Contact.objects.filter(user=request.user)
+        return super(ListContacts, self).dispatch(request, *args, **kwargs)
+
 
 def login_user(request):
     template_response = 'contacts/login.html'
